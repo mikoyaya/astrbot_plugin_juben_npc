@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>剧本杀同伴运营面板</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>剧本杀同伴运营面板</h1>
+          <p>按顺序维护总库、角色模板和玩家资产。所有图片保存在插件本地，无需图床。</p>
+        </div>
+        <button id="refresh" class="secondary" type="button">刷新数据</button>
+      </header>
+
+      <section class="board" id="library-board">
+        <div class="board-title"><div><span>第一板块</span><h2>角色、皮肤、道具与经验球</h2><p>经验球属于抽奖奖励，直接增加当前同伴经验，不会进入道具栏。</p></div></div>
+        <div class="color-control panel">
+          <div class="panel-head"><div><h3>色彩控制</h3><p>先选择要调整的图片类型，只显示对应色彩，避免混杂。</p></div><button id="save-settings" type="button">保存当前色彩</button></div>
+          <div class="color-tabs" role="tablist">
+            <button type="button" class="active" data-color-group="companion">同伴栏</button>
+            <button type="button" data-color-group="item">道具栏</button>
+          </div>
+          <form id="settings-form" class="color-grid">
+            <label data-color-group="companion">同伴中文名<input name="companion_name_color" type="color" /></label>
+            <label data-color-group="companion">英文名与品质<input name="companion_meta_color" type="color" /></label>
+            <label data-color-group="companion">同伴边框<input name="companion_border_color" type="color" /></label>
+            <label data-color-group="companion">专属物品字体<input name="exclusive_item_color" type="color" /></label>
+            <label data-color-group="companion">专属物品边框<input name="exclusive_item_border_color" type="color" /></label>
+            <label data-color-group="item" hidden>道具名称<input name="item_name_color" type="color" /></label>
+            <label data-color-group="item" hidden>道具品质<input name="item_quality_color" type="color" /></label>
+            <label data-color-group="item" hidden>道具效果<input name="item_effect_color" type="color" /></label>
+          </form>
+        </div>
+
+        <div class="library-layout">
+          <aside class="panel list-panel">
+            <div class="panel-head"><h3>总库</h3><button id="new-character" type="button">新增条目</button></div>
+            <div class="type-filter" role="tablist">
+              <button data-filter="all" class="active" type="button">全部</button>
+              <button data-filter="companion" type="button">同伴</button>
+              <button data-filter="skin" type="button">皮肤</button>
+              <button data-filter="item" type="button">道具</button>
+              <button data-filter="experience_ball" type="button">经验球</button>
+            </div>
+            <div id="library-folder-tabs" class="folder-tabs" aria-label="总库文件夹"></div>
+            <div id="character-list" class="character-list"></div>
+          </aside>
+
+          <section class="panel editor-panel">
+            <div class="panel-head"><div><h3>编辑条目</h3><span id="save-state"></span></div></div>
+            <form id="character-form" class="form-grid">
+              <label>条目类型<select name="kind"><option value="companion">同伴</option><option value="skin">皮肤</option><option value="item">道具</option><option value="experience_ball">经验球</option></select></label>
+              <label>ID<input name="id" required placeholder="linger" /></label>
+              <label>中文名称<input name="name" required placeholder="灵儿 / 星辰经验球" /></label>
+              <label>英文名 / 副标题<input name="english_name" placeholder="Blue Predator" /></label>
+              <label>品质<input name="quality" placeholder="SSR / 普通（仅展示）/ 经验球" /></label>
+              <label>文件夹<input name="folder" value="默认" placeholder="例如：主角 / 夏日活动" /></label>
+              <label class="skin-only">所属同伴<select name="parent_id" id="parent-companion"></select></label>
+              <label class="companion-only wide">专属物品（每行一件）<textarea name="exclusive_items" rows="3" placeholder="灵儿的信物&#10;灵儿的徽章"></textarea></label>
+              <label class="buyable-only checkline"><input name="buyable" type="checkbox" />允许玩家购买</label>
+              <label class="buyable-only">购买价格（星币）<input name="buy_price" type="number" min="0" max="1000000000" step="1" value="0" /></label>
+              <label>图片文件<input name="image" placeholder="上传后自动填入" /></label>
+              <label>画面焦点 X<input name="focal_x" type="number" min="0" max="1" step="0.01" value="0.5" /></label>
+              <label>画面焦点 Y<input name="focal_y" type="number" min="0" max="1" step="0.01" value="0.5" /></label>
+              <label class="checkline"><input name="in_pool" type="checkbox" />加入本期奖池</label>
+              <label class="companion-only wide">获取途径<input name="route" placeholder="运营后台添加 / 活动" /></label>
+              <label class="profile-only wide">经验加成<input name="bonus" placeholder="推理经验 +10%" /></label>
+              <label class="item-only wide">道具效果<textarea name="effect" rows="2" placeholder="玩家使用后展示的效果说明"></textarea></label>
+              <label class="item-only checkline"><input name="sellable" type="checkbox" />允许玩家出售</label>
+              <label class="item-only">出售单价（星币）<input name="sell_price" type="number" min="1" max="1000000" step="1" value="1" /></label>
+              <label class="experience-only">增加经验<input name="exp_amount" type="number" min="1" max="999999" value="10" /></label>
+              <label class="draw-weight">抽取权重<input name="draw_weight" type="number" min="1" max="1000" value="10" /></label>
+              <label class="item-only checkline"><input name="mining_pool" type="checkbox" />加入挖矿池</label>
+              <label class="item-only">挖矿权重<input name="mining_weight" type="number" min="1" max="1000" value="10" /></label>
+              <input name="intro" type="hidden" />
+              <details class="profile-only wide skills-details"><summary>星级技能与奖励（2 / 3 / 5 星）</summary><div class="skills-grid"><div class="skill-reward-row"><label>2星技能名<input name="skill0" /></label><label>2星技能描述<input name="skill0Desc" /></label><div class="star-reward companion-only"><label>2星星币奖励<input name="star2_coins" type="number" min="0" max="1000000000" step="1" value="0" /></label><label class="checkline"><input name="star2_exclusive" type="checkbox" />发放专属物品</label></div></div><div class="skill-reward-row"><label>3星技能名<input name="skill1" /></label><label>3星技能描述<input name="skill1Desc" /></label><div class="star-reward companion-only"><label>3星星币奖励<input name="star3_coins" type="number" min="0" max="1000000000" step="1" value="0" /></label><label class="checkline"><input name="star3_exclusive" type="checkbox" />发放专属物品</label></div></div><div class="skill-reward-row"><label>5星技能名<input name="skill2" /></label><label>5星技能描述<input name="skill2Desc" /></label><div class="star-reward companion-only"><label>5星星币奖励<input name="star5_coins" type="number" min="0" max="1000000000" step="1" value="0" /></label><label class="checkline"><input name="star5_exclusive" type="checkbox" />发放专属物品</label></div></div></div></details>
+            </form>
+            <div id="image-dropzone" class="dropzone" tabindex="0"><strong>条目图片上传</strong><span>选择、拖放，或点击后 Ctrl+V 粘贴图片。</span><input id="image-upload" type="file" accept="image/png,image/jpeg,image/webp" /></div>
+            <div class="upload-row"><button id="save-button" type="button">保存条目</button><button id="delete-button" class="danger" type="button">删除条目</button></div>
+            <div class="preview"><img id="preview-image" alt="" /><div><strong id="preview-title">未选择条目</strong><p id="preview-subtitle">上传图片后可调整画面焦点。</p></div></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="board" id="checkin-board">
+        <div class="board-title"><div><span>第二板块</span><h2>角色绑定的打卡背景与文字模板</h2><p>优先匹配当前皮肤，其次当前同伴，最后使用通用模板。每个模板只保留一张全背景，画框和排版由背景图完成。</p></div><button id="new-checkin-template" type="button">新增打卡模板</button></div>
+        <div class="template-layout panel">
+          <aside class="template-sidebar">
+            <section class="template-side-section">
+              <div class="template-side-head"><h3>模板</h3><span>选择后编辑</span></div>
+              <div id="checkin-template-list" class="character-list template-list"></div>
+            </section>
+          </aside>
+          <div class="template-editor">
+            <form id="checkin-template-form" class="template-form">
+              <label>模板 ID<input name="id" placeholder="linger_checkin" /></label><label>模板名称<input name="name" placeholder="灵儿打卡" /></label><label>绑定角色 / 皮肤<select name="bound_entry_id" class="template-bound-entry"></select></label>
+              <label>优先级<input name="priority" type="number" min="-100" max="100" value="0" /></label><label>文件夹<input name="folder" value="默认" placeholder="例如：角色 A / 夏日活动" /></label><label class="checkline"><input name="enabled" type="checkbox" checked />启用该模板</label>
+              <label class="wide">随机附言（最多 5 条，每次成功打卡随机使用一条）<textarea name="messages" rows="5" placeholder="每行一条随机附言"></textarea></label>
+              <input name="background_image" type="hidden" />
+              <div class="wide template-help">可用变量：<code>{title}</code>、<code>{reward}</code>、<code>{coins}</code>、<code>{message}</code>、<code>{date}</code>、<code>{user_name}</code>、<code>{user_id}</code>。<code>{message}</code> 的位置由下方文字行控制。</div>
+              <div class="wide text-table-head">字段 / 文本（可用变量） / X / Y / 字号 / 颜色 / 字重 / 阴影</div>
+              <div id="checkin-text-rows" class="wide"></div><button id="add-checkin-text" class="secondary small wide" type="button">新增自定义文字行</button>
+            </form>
+            <div class="layer-upload-grid single-layer-upload">
+              <div id="checkin-background-dropzone" class="dropzone compact" tabindex="0"><strong>上传全背景</strong><span>16:9 图片会无缝覆盖整张打卡卡片。</span><input id="checkin-background-upload" type="file" accept="image/png,image/jpeg,image/webp" /></div>
+            </div>
+            <div class="upload-row"><button id="preview-checkin-template" class="secondary" type="button">生成效果预览</button><button id="save-checkin-template" type="button">保存模板</button><button id="delete-checkin-template" class="danger" type="button">删除模板</button></div>
+            <img id="checkin-preview" class="template-preview" alt="打卡成品预览" />
+          </div>
+        </div>
+      </section>
+
+      <section class="board" id="status-board">
+        <div class="board-title"><div><span>第三板块</span><h2>角色绑定的状态栏模板</h2><p>模板只保留一张全背景、可拖定位置的文字和经验条。同伴或装备中的皮肤填写的经验加成、星级和 2/3/5 星技能会自动绑定到对应变量。</p></div><button id="new-status-template" type="button">新增状态模板</button></div>
+        <div class="template-layout panel">
+          <aside class="template-sidebar">
+            <section class="template-side-section">
+              <div class="template-side-head"><h3>模板</h3><span>选择后编辑</span></div>
+              <div id="status-template-list" class="character-list template-list"></div>
+            </section>
+          </aside>
+          <div class="template-editor">
+            <form id="status-template-form" class="template-form">
+              <label>模板 ID<input name="id" placeholder="linger_status" /></label><label>模板名称<input name="name" placeholder="灵儿状态栏" /></label><label>绑定角色 / 皮肤<select name="bound_entry_id" class="template-bound-entry"></select></label>
+              <label>优先级<input name="priority" type="number" min="-100" max="100" value="0" /></label><label>文件夹<input name="folder" value="默认" placeholder="例如：角色 A / 夏日活动" /></label><label class="checkline"><input name="enabled" type="checkbox" checked />启用该模板</label>
+              <input name="background_image" type="hidden" />
+              <div class="wide template-help">可用变量：<code>{user_name}</code>、<code>{user_id}</code>、<code>{character_name}</code>、<code>{subtitle_name}</code>、<code>{quality}</code>、<code>{bonus}</code>、<code>{stars}</code>、<code>{level}</code>、<code>{current}</code>、<code>{need}</code>、<code>{skill_2_name}</code>、<code>{skill_2_desc}</code>、<code>{skill_3_name}</code>、<code>{skill_3_desc}</code>、<code>{skill_5_name}</code>、<code>{skill_5_desc}</code>。装备皮肤后，经验加成和技能优先读取皮肤填写的内容。</div>
+              <fieldset class="wide progress-controls"><legend>经验条（绑定当前同伴经验）</legend><label class="checkline"><input name="progress_enabled" type="checkbox" checked />显示经验条</label><label class="progress-field">X<div class="range-control"><input data-progress-for="progress_x" type="range" min="0" max="1" step="0.01" value="0.441" /><input name="progress_x" type="number" min="0" max="1" step="0.01" value="0.441" /></div></label><label class="progress-field">Y<div class="range-control"><input data-progress-for="progress_y" type="range" min="0" max="1" step="0.01" value="0.440" /><input name="progress_y" type="number" min="0" max="1" step="0.01" value="0.440" /></div></label><label class="progress-field">宽度<div class="range-control"><input data-progress-for="progress_width" type="range" min="0.02" max="1" step="0.01" value="0.455" /><input name="progress_width" type="number" min="0.02" max="1" step="0.01" value="0.455" /></div></label><label class="progress-field">高度<div class="range-control"><input data-progress-for="progress_height" type="range" min="0.008" max="0.2" step="0.005" value="0.043" /><input name="progress_height" type="number" min="0.008" max="0.2" step="0.005" value="0.043" /></div></label><label>底色<input name="progress_background_color" type="color" value="#dbe2ef" /></label><label>填充色<input name="progress_color" type="color" value="#6d9bc6" /></label><label class="checkline"><input name="progress_auto_color" type="checkbox" checked />填充色跟随同伴/皮肤主色</label></fieldset>
+              <div class="wide text-table-head">字段 / 文本（可用变量） / X / Y / 字号 / 颜色 / 字重 / 阴影</div>
+              <div id="status-text-rows" class="wide"></div><div class="wide text-add-controls"><button id="add-status-text" class="secondary small" type="button">新增自定义文字行</button><select id="status-preset-text"><option value="">恢复可绑定预设字段…</option><option value="user">打开者</option><option value="name">角色名</option><option value="subtitle">副标题/经验加成</option><option value="stars">星级</option><option value="level">等级经验</option><option value="skill_2_name">2星技能名</option><option value="skill_2_desc">2星技能描述</option><option value="skill_3_name">3星技能名</option><option value="skill_3_desc">3星技能描述</option><option value="skill_5_name">5星技能名</option><option value="skill_5_desc">5星技能描述</option></select><button id="add-status-preset-text" class="secondary small" type="button">添加预设字段</button></div>
+            </form>
+            <div class="layer-upload-grid single-layer-upload">
+              <div id="status-background-dropzone" class="dropzone compact" tabindex="0"><strong>上传全背景</strong><span>图片会覆盖整个状态栏。</span><input id="status-background-upload" type="file" accept="image/png,image/jpeg,image/webp" /></div>
+            </div>
+            <div class="upload-row"><button id="preview-status-template" class="secondary" type="button">生成效果预览</button><button id="save-status-template" type="button">保存模板</button><button id="delete-status-template" class="danger" type="button">删除模板</button></div>
+            <img id="status-preview" class="template-preview status-preview" alt="状态栏成品预览" />
+          </div>
+        </div>
+      </section>
+
+      <section class="board" id="mining-board">
+        <div class="board-title"><div><span>第四板块</span><h2>角色绑定的每日挖矿</h2><p>玩家需拥有同伴后发送 <code>挖矿</code>；每名玩家每日一次，从勾选的挖矿道具池按权重获得一个道具。每个角色/皮肤模板最多保存 6 张随机背景。</p></div><button id="new-mining-template" type="button">新增挖矿模板</button></div>
+        <div class="template-layout panel">
+          <aside class="template-sidebar"><section class="template-side-section"><div class="template-side-head"><h3>挖矿模板</h3><span>选择后编辑</span></div><div id="mining-template-list" class="character-list template-list"></div></section></aside>
+          <div class="template-editor">
+            <form id="mining-template-form" class="template-form">
+              <label>模板 ID<input name="id" placeholder="linger_mining" /></label><label>模板名称<input name="name" placeholder="灵儿挖矿" /></label><label>绑定角色 / 皮肤<select name="bound_entry_id" class="template-bound-entry"></select></label>
+              <label>优先级<input name="priority" type="number" min="-100" max="100" value="0" /></label><label>文件夹<input name="folder" value="默认" placeholder="例如：角色 A / 夏日活动" /></label><label class="checkline"><input name="enabled" type="checkbox" checked />启用该模板</label>
+              <div class="wide template-help">上传 1–6 张背景后，挖矿时会从当前同伴/皮肤匹配的模板中随机选取一张。道具图片、名称和挖矿权重在第一板块的“道具”条目中维护。</div>
+              <div id="mining-background-gallery" class="wide background-gallery"></div>
+            </form>
+            <div id="mining-background-dropzone" class="dropzone compact"><strong>上传挖矿背景（最多 6 张）</strong><span>选择、拖放，或点击后 Ctrl+V 粘贴图片。</span><input id="mining-background-upload" type="file" accept="image/png,image/jpeg,image/webp" multiple /></div>
+            <div class="upload-row"><button id="save-mining-template" type="button">保存挖矿模板</button><button id="delete-mining-template" class="danger" type="button">删除挖矿模板</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="board" id="draw-board">
+        <div class="board-title"><div><span>第五板块</span><h2>抽奖结果设计</h2><p>上传一张全背景；结果卡按经验球、道具和大奖三类分别调整内部填充色。</p></div></div>
+        <section class="panel draw-design-panel">
+          <form id="draw-design-form" class="template-form">
+            <input name="background_image" type="hidden" />
+            <label>奖池 ID<input name="pool_id" type="text" value="default" maxlength="80" /></label>
+            <label>经验球结果卡填充色<input name="experience_ball_card_color" type="color" value="#ffffff" /></label>
+            <label>道具结果卡填充色<input name="item_card_color" type="color" value="#ffffff" /></label>
+            <label>大奖结果卡填充色<input name="jackpot_card_color" type="color" value="#ffffff" /></label>
+            <label>经验球概率（%）<input name="experience_rate" type="number" min="0" max="100" step="0.01" value="86" /></label>
+            <label>道具概率（%）<input name="item_rate" type="number" min="0" max="100" step="0.01" value="13" /></label>
+            <label>同伴概率（%）<input name="companion_rate" type="number" min="0" max="100" step="0.01" value="0.5" /></label>
+            <label>皮肤概率（%）<input name="skin_rate" type="number" min="0" max="100" step="0.01" value="0.5" /></label>
+          </form>
+          <div id="draw-background-dropzone" class="dropzone compact"><strong>上传抽奖全背景</strong><span>上传后直接应用到抽奖结果；不再显示同伴/皮肤奖池框。</span><input id="draw-background-upload" type="file" accept="image/png,image/jpeg,image/webp" /></div>
+          <div class="upload-row"><button id="save-draw-design" type="button">保存抽奖设计</button></div><img id="draw-design-preview" class="template-preview draw-design-preview" alt="抽奖背景预览" />
+        </section>
+      </section>
+
+      <section class="board" id="assets-board">
+        <div class="board-title"><div><span>第六板块</span><h2>玩家资产发放与扣除</h2><p>可发放或收回同伴、皮肤和道具；道具可按数量扣除。经验球不会出现在此处。</p></div></div>
+        <section class="panel asset-panel">
+          <div class="asset-grid">
+            <label class="wide">可使用管理员发放指令的 QQ（每行或逗号一个）<textarea id="gift-operator-ids" rows="3" placeholder="例如：10001&#10;10002"></textarea><small>白名单可凭空发放或扣除玩家资产。</small></label><button id="save-gift-operators" type="button">保存管理员白名单</button>
+            <label class="wide">可使用玩家赠送指令的 QQ（每行或逗号一个）<textarea id="gift-permission-ids" rows="3" placeholder="例如：20001&#10;20002"></textarea><small>名单内玩家可以使用赠送星币和赠送道具，资产会从本人账户扣除；留空时全部禁用。</small></label><button id="save-gift-permissions" type="button">保存玩家赠送权限</button>
+            <label>已记录玩家<select id="known-player"></select></label><label>群 / 会话 Scope ID<input id="asset-scope" placeholder="群号或 session id" /></label><label>用户 ID<input id="asset-user" placeholder="QQ / 平台用户 ID" /></label><label>昵称<input id="asset-name" placeholder="发放时可填写" /></label>
+            <label>同伴 / 皮肤 / 道具<select id="asset-character"></select></label><label>道具扣除数量<input id="asset-amount" type="number" min="1" max="9999" value="1" /></label>
+            <div class="asset-actions"><button id="grant-button" type="button">发放条目</button><button id="revoke-button" class="danger" type="button">扣除条目</button></div>
+            <label>选择同伴（按顺序发放）<select id="grant-exclusive"></select></label><button id="grant-exclusive-button" type="button">发放下一件专属物品</button>
+          </div>
+        </section>
+      </section>
+      <div id="toast" class="toast"></div>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
